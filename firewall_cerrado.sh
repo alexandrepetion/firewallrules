@@ -21,7 +21,7 @@ dns2_ip="181.118.150.20"
 nsuao_ip="181.118.150.58"
 
 #Punto 13 Verifica politicas actuales
-iptables -L
+iptables -L -v -n
 
 #Borrar las reglas
 iptables -F
@@ -74,13 +74,14 @@ iptables -A OUTPUT -s $mi_ip -d 0.0.0.0/0 -p tcp --dport https --sport 1024:6553
 iptables -A INPUT  -s 0.0.0.0/0 -d $mi_ip -p tcp --sport https --dport 1024:65535 -j ACCEPT
 
 #punto 23 Server - Acceso SSH de un solo equipo de la LAN [10.10.11.157].
-iptables -A OUTPUT -s $mi_ip -d $stv_ip -p tcp --sport 1024:65535 --dport ssh  -j ACCEPT
-iptables -A INPUT  -s $stv_ip -d $mi_ip -p tcp --sport ssh --dport 1024:65535  -j ACCEPT
+iptables -A OUTPUT -s $mi_ip -d $stv_ip -p tcp --sport 1024:65535 --dport ssh -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A INPUT  -s $stv_ip -d $mi_ip -p tcp --sport ssh --dport 1024:65535 -m state --state ESTABLISHED     -j ACCEPT
 
 #punto 24 lado Cliente Accediendo al server SSH  LAN [10.10.11.157].
-iptables -A INPUT  -d $stv_ip -s $mi_ip -p tcp --sport 22  --dport 1024:65535 -j ACCEPT
-iptables -A OUTPUT -d $mi_ip -s $stv_ip -p tcp --sport 1024:65535 --dport 22  -j ACCEPT
+iptables -A INPUT  -d $stv_ip -s $mi_ip -p tcp --sport 22  --dport 1024:65535 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -d $mi_ip -s $stv_ip -p tcp --sport 1024:65535 --dport 22  -m state --state ESTABLICHED     -j ACCEPT
 
 #punto 25 Permite visibilidad LAN del server web local.
-iptables -A INPUT  -s $mi_ip -d $red_lan -p tcp --sport 80 --dport 1024:65535  -j ACCEPT
-iptables -A OUTPUT -s $red_lan -d $mi_ip -p tcp --dport 1024:65535 --sport 80  -j ACCEPT
+iptables -A INPUT  -s $mi_ip -d $red_lan -p tcp --sport 80 --dport 1024:65535 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -s $red_lan -d $mi_ip -p tcp --dport 1024:65535 --sport 80 -m state --state ESTABLISHED     -j ACCEPT
+
