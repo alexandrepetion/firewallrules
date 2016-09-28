@@ -73,15 +73,33 @@ iptables -A INPUT  -s 0.0.0.0/0 -d $mi_ip -p tcp --sport http --dport 1024:65535
 iptables -A OUTPUT -s $mi_ip -d 0.0.0.0/0 -p tcp --dport https --sport 1024:65535 -j ACCEPT
 iptables -A INPUT  -s 0.0.0.0/0 -d $mi_ip -p tcp --sport https --dport 1024:65535 -j ACCEPT
 
-#punto 23 Server - Acceso SSH de un solo equipo de la LAN [10.10.11.157].
-iptables -A OUTPUT -s $mi_ip -d $stv_ip -p tcp --sport 1024:65535 --dport ssh -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -A INPUT  -s $stv_ip -d $mi_ip -p tcp --sport ssh --dport 1024:65535 -m state --state ESTABLISHED     -j ACCEPT
+#punto 23 Server Acceso SSH [10.10.11.191] de un solo equipo de la LAN [10.10.11.157].
+iptables -A OUTPUT -o $inter -d $mi_ip -s $stv_ip -p tcp --sport 1024:65535 --dport ssh -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A INPUT  -i $inter -d $stv_ip -s $mi_ip -p tcp --sport ssh --dport 1024:65535 -m state --state ESTABLISHED     -j ACCEPT
 
-#punto 24 lado Cliente Accediendo al server SSH  LAN [10.10.11.157].
-iptables -A INPUT  -d $stv_ip -s $mi_ip -p tcp --sport 22  --dport 1024:65535 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -A OUTPUT -d $mi_ip -s $stv_ip -p tcp --sport 1024:65535 --dport 22  -m state --state ESTABLICHED     -j ACCEPT
+#punto 24 lado Cliente [10.10.11.191] accediendo al server SSH  LAN [10.10.11.157].
+iptables -A INPUT  -i $inter -d $mi_ip -s $stv_ip -p tcp --sport 22  --dport 1024:65535 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -o $inter -d $stv_ip -s $mi_ip -p tcp --sport 1024:65535 --dport 22  -m state --state ESTABLICHED     -j ACCEPT
+  
+#punto 25 Permite visibilidad LAN [10.10.11.0/24] del server web local[http://10.10.11.191:80].
+iptables -A OUTPUT -s $mi_ip -d $red_ip -p tcp --sport 80 --dport 1024:65535 -m state --state NEW,ESTABLISHED  -j ACCEPT
+iptables -A INPUT  -s $red_ip -d $mi_lan -p tcp --sport 1024:65535 --dport 80 -m state --state ESTABLISHED     -j ACCEPT
+#punto 25.1 Permite visibilidad LAN [10.10.11.0/24] del server web local[http://10.10.11.191:8080].
+iptables -A OUTPUT -s $mi_ip -d $red_ip -p tcp --sport 8080 --dport 1024:65535 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A INPUT  -s $red_ip -d $mi_ip -p tcp --sport 1024:65535 --dport 8080 -m state --state ESTABLISHED     -j ACCEPT
 
-#punto 25 Permite visibilidad LAN del server web local.
-iptables -A INPUT  -s $mi_ip -d $red_lan -p tcp --sport 80 --dport 1024:65535 -m state --state NEW,ESTABLISHED -j ACCEPT
-iptables -A OUTPUT -s $red_lan -d $mi_ip -p tcp --dport 1024:65535 --sport 80 -m state --state ESTABLISHED     -j ACCEPT
+#punto 26 Permite a la red LAN [10.10.11.0/24] accesar a los servicios instalados en el servidor(www,ssh,ftp, etc)
+#[www]
+iptables -A OUTPUT -s $mi_ip -d $red_ip -p tcp --sport 80 --dport 1024:65535 -m state --state NEW,ESTABLISHED  -j ACCEPT
+iptables -A INPUT  -s $red_ip -d $mi_lan -p tcp --sport 1024:65535 --dport 80 -m state --state ESTABLISHED     -j ACCEPT
+#[ssh]
+iptables -A OUTPUT -o $inter -d $mi_ip -s $stv_ip -p tcp --sport 1024:65535 --dport ssh -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A INPUT  -i $inter -d $stv_ip -s $mi_ip -p tcp --sport ssh --dport 1024:65535 -m state --state ESTABLISHED     -j ACCEPT
+#[ftp]
+iptables -A INPUT -p tcp --sport 1024:65535 --dport 21 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A INPUT -p tcp --sport 1024:65535 --dport 20 -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -p tcp --sport 21 --dport 1024:65535 -m state --state ESTABLISHED -j ACCEPT
 
+ iptables -A INPUT -s 192.168.1.0/24 -d 192.168.1.0/24 -p tcp -m tcp --dport 21 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT 
+ iptables -A INPUT -s 192.168.1.0/24 -d 192.168.1.0/24 -p tcp -m tcp --dport 20 -m conntrack --ctstate ESTABLISHED -j ACCEPT 
+ iptables -A INPUT -s 192.168.1.0/24 -d 192.168.1.0/24 -p tcp -m tcp --sport 1024: --dport 1024: -m conntrack --ctstate ESTABL
