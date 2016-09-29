@@ -13,7 +13,7 @@
 inter="ens33"
 mi_ip="10.10.11.191"
 red_lan="10.10.11.0/24"
-broad_lan="10.10.11.255"
+bcast_lan="10.10.11.255"
 pro_ip="10.10.11.156"
 cli_ip="10.10.11.131"
 stv_ip="10.10.11.157"
@@ -122,5 +122,5 @@ iptables -A OUTPUT -s $red_lan -d $mi_ip -p tcp -m tcp --sport 1024:65535 --dpor
 iptables -A INPUT -s $mi_ip -j DROP 
 
 #punto 28 Bloquea trafico entrante inluyendo ip address broadcast[10.10.10.255] y address network[10.10.11.0/24]
-iptables -A INPUT -s $broad_lan -j DROP
+iptables -A INPUT -s $bcast_lan -j DROP
 iptables -A INPUT -s $red_lan -j DROP
